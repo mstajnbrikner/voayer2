@@ -29,11 +29,14 @@ namespace cameraAndVideo
         bool setupFinished = false;
 
         bool recordingEnabled = false;
-        private int framesRecorded;
         private int maxFrames;
         string destinationPath = @"D:\Google_drive\Visual Studio - programi\EMGU CV\";
         int videoNumber = 0;
         double fps = 0;
+
+        bool surveillanceOn = false;
+
+        int framesRecorded = 0;
 
 
 
@@ -53,43 +56,93 @@ namespace cameraAndVideo
         {
             InitializeComponent();
             Console.WriteLine(destinationPath);
-
+            showOperatingMode(0);
+            setSurvStatus(0);
+            startCapturingVideo();
         }
 
+        private void setSurvStatus(int status)
+        {
+            if(status == 0)
+            {
+                label_survStatus.Text = "Surveillance OFF!";
+                label_survStatus.ForeColor = Color.Red;
+            }
+            else if(status == 1)
+            {
+                label_survStatus.Text = "Surveillance ON!";
+                label_survStatus.ForeColor = Color.Green;
+            }
+            else
+            {
 
+            }
+        }
 
-        private void startToolStripMenuItem_Click(object sender, EventArgs e)
+        private void showOperatingMode(int mode)
+        {
+            if(mode == 0)
+            {
+                button_startSurv.Show();
+                button_stopSurv.Show();
+
+                label_automaticStart.Hide();
+                label_automaticStop.Hide();
+                label_colonStart.Hide();
+                label_colonStop.Hide();
+                comboBox_startHours.Hide();
+                comboBox_startMinutes.Hide();
+                comboBox_stopHours.Hide();
+                comboBox_stopMinutes.Hide();
+            }
+            else if(mode == 1)
+            {
+                button_startSurv.Hide();
+                button_stopSurv.Hide();
+
+                label_automaticStart.Show();
+                label_automaticStop.Show();
+                label_colonStart.Show();
+                label_colonStop.Show();
+                comboBox_startHours.Show();
+                comboBox_startMinutes.Show();
+                comboBox_stopHours.Show();
+                comboBox_stopMinutes.Show();
+            }
+            else
+            {
+
+            }
+        }
+
+        private void startCapturingVideo()
         {
             if (capture == null)
             {
                 capture = new Emgu.CV.VideoCapture(0);
             }
-            //capture.ImageGrabbed += Capture_ImageGrabbed;              
+
             capture.Start();
 
             dateTime = DateTime.Now;
             dateTime_finish = dateTime.AddMilliseconds(10000);
             frameCount = 0;
 
-            timer = new System.Threading.Timer(new TimerCallback(TickTimer), null, 1000, 200);
-
+            timer = new System.Threading.Timer(new TimerCallback(TickTimer), null, 1000, 125);
         }
+
 
         private void TickTimer(object state)
         {
             int moves;
-            frameCount++;
-
             if (DateTime.Now > dateTime_finish && setupFinished == false)
             {
-                setupFinished = true;
-                //fps = (double)frameCount / (double)10;
+                setupFinished = true;       
             }
-
 
             try
             {
-                if (firstFrame)
+                if(firstFrame)
                 {
                     capture.Read(m);
                     pictureBox1.Image = m.ToBitmap();
@@ -98,11 +151,11 @@ namespace cameraAndVideo
                 }
                 else
                 {
+                    //capturing and difference
                     capture.Read(m);
-
-
                     currentFrame = m.ToImage<Gray, byte>();
                     lastFrame = last_m.ToImage<Gray, byte>();
+                    last_m = m.Clone();                 
 
                     pictureBox1.Image = currentFrame.ToBitmap();
 
@@ -120,107 +173,94 @@ namespace cameraAndVideo
                     }
                     Console.WriteLine(moves.ToString());
 
-                    // moves = diffFrame.CountNonzero()[0];
-                    Console.WriteLine(moves);
 
-                    if ((moves > 20) && (recordingEnabled == false) && (DateTime.Now > dateTime_finish))
+                    //recording
+                    if(surveillanceOn)
                     {
-                        recordingEnabled = true;
-                        maxFrames = 100;
-                        framesRecorded = 0;
+                        if ((moves > 20) && (recordingEnabled == false) && (DateTime.Now > dateTime_finish))
+                        {
+                            recordingEnabled = true;
+                            maxFrames = 80;
+                            framesRecorded = 0;
+                        }
+                        if ((moves > 20) && (recordingEnabled == true) && (framesRecorded > (maxFrames - 20)))
+                        {
+                            maxFrames += 20;
+                            Console.WriteLine("Dodano 20 okvira!!");
+                        }
+                        if(recordingEnabled && (DateTime.Now > dateTime_finish))
+                        {
+                            if(writer == null)
+                            {
+                                int fourcc = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FourCC));
+                                int width = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth));
+                                int height = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight));
+                                writer = new VideoWriter(destinationPath + "recorded" + (videoNumber + 1).ToString() + ".mp4", fourcc, 8, new Size(width, height), false);
+                                videoNumber++;
+                            }
+                            writer.Write(m);
+                            framesRecorded++;
+                            if(framesRecorded >= maxFrames)
+                            {
+                                framesRecorded = 0;
+                                recordingEnabled = false;
+                                writer.Dispose();
+                                writer = null;
+                            }
+                        }
                     }
-                    if ((moves > 20) && (recordingEnabled == true) && (framesRecorded > (maxFrames - 40)))
+                    else
                     {
-                        maxFrames += 40;
-                        Console.WriteLine("Dodano 40 okvira!!");
+                        if(writer.IsOpened)
+                        {
+                            framesRecorded = 0;
+                            recordingEnabled = false;
+                            writer.Dispose();
+                            writer = null;
+                        }
                     }
-
-
-                    //pictureBox2.Image = diffFrame.ToBitmap();
-
-                    last_m = m.Clone();
                 }
-
-                if ((recordingEnabled == true) && (DateTime.Now > dateTime_finish))
-                {
-
-                    if (writer == null)
-                    {
-                        int fourcc = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FourCC));
-                        int width = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth));
-                        int height = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight));
-                        writer = new VideoWriter(destinationPath + "recorded" + (videoNumber + 1).ToString() + ".mp4", fourcc, 5, new Size(width, height), false);
-                        videoNumber++;
-                    }
-                    writer.Write(m);
-                    framesRecorded++;
-                    if (framesRecorded >= maxFrames)
-                    {
-                        framesRecorded = 0;
-                        recordingEnabled = false;
-                        writer.Dispose();
-                        writer = null;
-                    }
-
-                }
-
             }
             catch (Exception ex)
             {
             }
+
         }
 
-        
-
-
-        private void stopToolStripMenuItem_Click(object sender, EventArgs e)
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            recordingEnabled = false;
-            timer.Change(Timeout.Infinite, Timeout.Infinite);
-            timer.Dispose();
-            timer = null;
-            if (capture != null)
+            try
             {
+                capture.Stop();
                 capture.Dispose();
-                capture = null;
             }
-            if (writer.IsOpened)
+            catch (Exception ex)
             {
-                writer.Dispose();
-                writer = null;
+
             }
+            
         }
 
-        private void pauseToolStripMenuItem_Click(object sender, EventArgs e)
+        private void radioButton_manual_CheckedChanged(object sender, EventArgs e)
         {
-            if (capture != null)
-            {
-                capture.Pause();
-            }
+            showOperatingMode(0);
         }
 
-        private void startRecordingToolStripMenuItem_Click(object sender, EventArgs e)
+        private void radioButton_automatic_CheckedChanged(object sender, EventArgs e)
         {
-            if (capture == null)
-            {
-                return;
-            }
-
-            if (writer == null)
-            {
-                int fourcc = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FourCC));
-                int width = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth));
-                int height = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight));
-                writer = new VideoWriter(destinationPath, fourcc, fps, new Size(width, height), false);
-            }
-            recordingEnabled = true;
+            showOperatingMode(1);
         }
 
-        private void stopRecordingToolStripMenuItem_Click(object sender, EventArgs e)
+        private void button_startSurv_Click(object sender, EventArgs e)
         {
-            writer.Dispose();
-            writer = null;
-            recordingEnabled = false;
+            setSurvStatus(1);
+            surveillanceOn = true;
+        }
+
+        private void button_stopSurv_Click(object sender, EventArgs e)
+        {
+            setSurvStatus(0);
+            surveillanceOn = false;
         }
     }
 }
