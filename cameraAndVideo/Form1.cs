@@ -36,7 +36,7 @@ namespace cameraAndVideo
 
         bool recordingEnabled = false;
         private int maxFrames;
-        string destinationPath = @"D:\Google_drive\Visual Studio - programi\EMGU CV\";
+        string destinationPath = @"D:\VIDEO\";
         int videoNumber = 0;
         double fps = 0;
 
@@ -411,7 +411,7 @@ namespace cameraAndVideo
             }
             else
             {
-                MessageBox.Show("Enter auto video surveillance parameters!", "Warning!");
+                MessageBox.Show("Enter auto video surveillance parameters then re enter automatic mode!", "Warning!");
             }
         }
 
