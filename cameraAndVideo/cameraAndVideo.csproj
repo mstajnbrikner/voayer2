@@ -8,7 +8,7 @@
     <ProjectGuid>{E967457A-CE74-48E0-9F96-11F1A85798AD}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>cameraAndVideo</RootNamespace>
-    <AssemblyName>cameraAndVideo</AssemblyName>
+    <AssemblyName>voyeur</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

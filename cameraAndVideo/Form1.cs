@@ -36,7 +36,7 @@ namespace cameraAndVideo
 
         bool recordingEnabled = false;
         private int maxFrames;
-        string destinationPath = @"D:\VIDEO\";
+        string destinationPath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
         int videoNumber = 0;
         double fps = 0;
 
@@ -108,8 +108,7 @@ namespace cameraAndVideo
             catch(Exception ex)
             {
                 if (conn.State != ConnectionState.Closed)
-                    conn.Close();
-                MessageBox.Show(ex.Message, "Database error!");
+                    conn.Close();             
             }           
         }
 
@@ -254,7 +253,7 @@ namespace cameraAndVideo
                                 int fourcc = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FourCC));
                                 int width = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth));
                                 int height = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight));
-                                writer = new VideoWriter(destinationPath + "rec" + motionStartTime.Year.ToString() + motionStartTime.Month.ToString() + motionStartTime.Day.ToString() + motionStartTime.Hour.ToString() + motionStartTime.Minute.ToString() + motionStartTime.Second.ToString() + ".mp4", fourcc, 8, new Size(width, height), false);
+                                writer = new VideoWriter(destinationPath + "/rec" + motionStartTime.Year.ToString() + motionStartTime.Month.ToString() + motionStartTime.Day.ToString() + motionStartTime.Hour.ToString() + motionStartTime.Minute.ToString() + motionStartTime.Second.ToString() + ".mp4", fourcc, 8, new Size(width, height), false);
                                 videoNumber++;
                             }
                             writer.Write(m);
@@ -309,7 +308,7 @@ namespace cameraAndVideo
                                     int fourcc = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FourCC));
                                     int width = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth));
                                     int height = Convert.ToInt32(capture.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight));
-                                    writer = new VideoWriter(destinationPath + "rec" + motionStartTime.Year.ToString() + motionStartTime.Month.ToString() + motionStartTime.Day.ToString() + motionStartTime.Hour.ToString() + motionStartTime.Minute.ToString() + motionStartTime.Second.ToString() + ".mp4", fourcc, 8, new Size(width, height), false);
+                                    writer = new VideoWriter(destinationPath + "/rec" + motionStartTime.Year.ToString() + motionStartTime.Month.ToString() + motionStartTime.Day.ToString() + motionStartTime.Hour.ToString() + motionStartTime.Minute.ToString() + motionStartTime.Second.ToString() + ".mp4", fourcc, 8, new Size(width, height), false);
                                     videoNumber++;
                                 }
                                 writer.Write(m);
@@ -379,7 +378,8 @@ namespace cameraAndVideo
             try
             {
                 capture.Stop();
-                capture.Dispose();               
+                capture.Dispose();
+                capture = null;
             }
             catch (Exception ex)
             {
